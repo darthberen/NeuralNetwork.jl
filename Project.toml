@@ -1,0 +1,15 @@
+name = "NeuralNetwork"
+uuid = "9e3b7a60-142e-11e9-1baa-7b48621f8d54"
+authors = ["Matt Price <mattprice11@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
+
+[compat]
+julia = "^1"
