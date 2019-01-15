@@ -29,6 +29,7 @@ end  # struct
 Instantiates a fully connected neural network given the desired layer sizes.
 """
 FullyConnectedNetwork(layerSizes::Vector{Int}) = begin
+    # NOTE: Julia stores multi-dimensional arrays in column-major order
     # TODO: validate layers are all positive integers
     biases = [rand(Normal(0, 1), layerSize)  # TODO: flip dimensions?
               for layerSize in layerSizes[2:length(layerSizes)]]
@@ -44,30 +45,36 @@ FullyConnectedNetwork(layerSizes::Vector{Int}) = begin
     )
 end # begin
 
-function feedfoward(net::FullyConnectedNetwork, layerInput::Vector{Float64})
-    #println("train! item $(item) | size $(size(item)) | length $(length(item))")
-    #println("train! item $(layerInput) | size $(size(layerInput)) | length $(length(layerInput))")
-    #activations = net.weights[1] .⋅ item .+ net.biases[1]
+"""
+neuron output is σ(weight ⋅ input + bias)
+"""
+function feedfoward(net::FullyConnectedNetwork, sample::Vector{Float64})
+    activations = sample  # the activation output of the input layer is the sample itself
 
-    #layerInput = item
-    #for layerSize in net.layerSizes[2:]
-    for l in 2:net.numLayers
-        activations = Vector{Float64}()
+    for l in 2:net.numLayers  # iterate through each layer starting with the first hidden layer
         w = net.weights[l-1]
         b = net.biases[l-1]
-        for n in 1:net.layerSizes[l]
-            #println("w $(w[:,n]) | typeof $(typeof(w)) | size $(size(w[:,n])) | length $(length(w[:,n]))")
-            append!(activations, dot(w[:,n], layerInput))
-        end # for (neuron loop)
-        #println("activations for layer $(activations) | typeof $(typeof(activations)) | size $(size(activations))")
-        #println("biases $(b) | typeof $(typeof(b)) | size $(size(b))")
-        activations += b
-        #println("activations + biases $(activations) | typeof $(typeof(activations)) | size $(size(activations))")
-        layerInput = sigmoid(activations)
-        #println("sigmoids $(layerInput) | typeof $(typeof(layerInput)) | size $(size(layerInput)) | length $(length(layerInput))")
+
+        """
+        NOTE: there are multiple ways to implement this
+        Method 1: for loop
+            tracker = Vector{Float64}()
+            for n in 1:net.layerSizes[l]  # iterate through each neuron...
+                append!(tracker, dot(w[:,n], activations)) # ...and dot product it with the activation vector (from previous layer)
+            end # for (neuron loop)
+            tracker += b
+            activations = sigmoid(tracker)
+
+        Method 2: list iteration
+            activations = sigmoid([dot(w[:,n], activations) for n in 1:net.layerSizes[l]] + b)
+
+        Method 3: broadcast and array/vector operations (most performant)
+            [USED]
+        """
+        activations = sigmoid(reshape(sum(dot.(w, activations), dims=1), length(b)) + b)
     end # for (layer loop)
 
-    return layerInput
+    return activations
 
 end # function feedforward
 
