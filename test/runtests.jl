@@ -1,5 +1,15 @@
 using Test
 
-println("hello world from runtests.jl")
+testlist = [
+    "fullyconnected"
+]
 
-@test 1 == 1
+@testset "NeuralNetwork" begin
+    for f in testlist
+        println("Running $(f) tests...")
+        include("$(f).jl")
+    end # for
+end # begin (testset)
+# println("hello world from runtests.jl")
+
+#@test 1 == 1
