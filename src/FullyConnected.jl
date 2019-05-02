@@ -1,9 +1,10 @@
 module FullyConnected
 
+using Random
 using Distributions
 using LinearAlgebra
 
-export FullyConnectedNetwork, feedfoward
+export FullyConnectedNetwork, feedfoward, train!
 
 struct FullyConnectedNetwork
     numLayers::UInt
@@ -69,9 +70,11 @@ function feedfoward(net::FullyConnectedNetwork, sample::Vector{Float64})
             activations = sigmoid([dot(w[:,n], activations) for n in 1:net.layerSizes[l]] + b)
 
         Method 3: broadcast and array/vector operations (most performant)
-            [USED]
+            Note: for some reason the dot function does not sum with multidimensional arrays so it's basically the same as .*
+            activations = sigmoid(reshape(sum(dot.(w, activations), dims=1), length(b)) + b)
+            activations = sigmoid(reshape(sum(w .* activations, dims=1), length(b)) + b)
         """
-        activations = sigmoid(reshape(sum(dot.(w, activations), dims=1), length(b)) + b)
+        activations = sigmoid(reshape(sum(w .* activations, dims=1), length(b)) + b)
     end # for (layer loop)
 
     return activations
@@ -82,5 +85,26 @@ function sigmoid(z::Array{Float64, 1})
     #println("sigmoid called with $(z)")
     return @. 1.0 / (1.0 + ℯ ^ z)
 end # function sigmoid
+
+function train!(net::FullyConnectedNetwork, trainingData,
+                epochs::Int, miniBatchSize::Int, learningRate::Float64) #,
+                #testData::Array{Array{Float64, 1}, 1})
+    for epoch in 1:epochs
+        shuffle!(trainingData)
+        miniBatches = [trainingData[k:min(k+miniBatchSize-1, length(trainingData))]
+                       for k in 1:miniBatchSize:length(trainingData)]
+        for miniBatch in miniBatches
+            println(miniBatch)
+            updateMiniBatch!(miniBatch, learningRate)
+        end # for (minibatch loop)
+        #println(miniBatches)
+
+        println("epoch $(epoch) completed")
+    end # for (epoch loop)
+end # function train!
+
+function updateMiniBatch!(miniBatch, learningRate::Float64)
+
+end # function updateMiniBatch
 
 end # module FullyConnected
